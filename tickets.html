@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}All Tickets &bull; IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title-area">
+        <h1 class="page-title">IT Support Tickets</h1>
+        <p class="page-subtitle">Track, filter, and inspect technical issues across departments.</p>
+    </div>
+    <div class="dashboard-actions">
+        <a href="{{ url_for('create_ticket') }}" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Create New Ticket
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filtering Card -->
+<div class="card filter-card">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('tickets') }}" class="filter-form" id="filterForm">
+            <!-- Search bar -->
+            <div class="filter-search-group">
+                <label for="searchInput" class="filter-label">Search Query</label>
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Search by Ticket ID (e.g., HD-9999), Title, or Requester..." class="form-control form-control-search">
+                </div>
+            </div>
+
+            <!-- Filters Row -->
+            <div class="filter-controls-row">
+                <div class="filter-select-group">
+                    <label for="statusFilter" class="filter-label">Status</label>
+                    <select name="status" id="statusFilter" class="form-control">
+                        <option value="">All Statuses</option>
+                        {% for status in STATUSES %}
+                            <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-select-group">
+                    <label for="categoryFilter" class="filter-label">Category</label>
+                    <select name="category" id="categoryFilter" class="form-control">
+                        <option value="">All Categories</option>
+                        {% for category in CATEGORIES %}
+                            <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-select-group">
+                    <label for="priorityFilter" class="filter-label">Priority</label>
+                    <select name="priority" id="priorityFilter" class="form-control">
+                        <option value="">All Priorities</option>
+                        {% for priority in PRIORITIES %}
+                            <option value="{{ priority }}" {% if priority_filter == priority %}selected{% endif %}>{{ priority }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-buttons-group">
+                    <button type="submit" class="btn btn-secondary btn-filter">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                        Apply Filters
+                    </button>
+                    {% if search_query or status_filter or category_filter or priority_filter %}
+                        <a href="{{ url_for('tickets') }}" class="btn btn-outline btn-reset" title="Clear all filters">
+                            Clear
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Ticket Results Summary -->
+<div class="results-meta-bar">
+    <div class="results-count">
+        Found <strong>{{ result_count }}</strong> ticket{{ 's' if result_count != 1 else '' }}
+        {% if search_query or status_filter or category_filter or priority_filter %}
+            <span class="active-filter-hint">(filtered)</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tickets Table -->
+<div class="card tickets-table-card">
+    <div class="card-body no-padding">
+        {% if tickets %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Title & Description</th>
+                            <th>Requester</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created / Updated</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('ticket_details', ticket_id=ticket['ticket_id']) }}" class="ticket-id-badge">
+                                        {{ ticket['ticket_id'] }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="ticket-title-block">
+                                        <a href="{{ url_for('ticket_details', ticket_id=ticket['ticket_id']) }}" class="table-ticket-title">
+                                            {{ ticket['title'] }}
+                                        </a>
+                                        {% if ticket['department'] %}
+                                            <span class="dept-badge">{{ ticket['department'] }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="requester-block">
+                                        <span class="requester-name">{{ ticket['requester_name'] }}</span>
+                                        <span class="requester-email">{{ ticket['requester_email'] }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-pill">{{ ticket['category'] }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge-priority priority-{{ ticket['priority'].lower() }}">
+                                        {{ ticket['priority'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-status status-{{ ticket['status'].lower().replace(' ', '-') }}">
+                                        {{ ticket['status'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="timestamp-block">
+                                        <span class="date-cell" title="Created date">{{ ticket['created_at']|format_datetime }}</span>
+                                        {% if ticket['updated_at'] and ticket['updated_at'] != ticket['created_at'] %}
+                                            <span class="date-cell-sub" title="Last updated">Updated: {{ ticket['updated_at']|format_datetime }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <a href="{{ url_for('ticket_details', ticket_id=ticket['ticket_id']) }}" class="btn-action-view">
+                                        View Details &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                </div>
+                <h3>No tickets match your criteria</h3>
+                <p>Try adjusting your search terms or clearing active filters to view all records.</p>
+                <a href="{{ url_for('tickets') }}" class="btn btn-secondary btn-sm">Clear All Filters</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

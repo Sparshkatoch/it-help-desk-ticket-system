@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard &bull; IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title-area">
+        <h1 class="page-title">IT Operations Dashboard</h1>
+        <p class="page-subtitle">Real-time status overview, incoming complaints, and resolution tracking.</p>
+    </div>
+    <div class="dashboard-actions">
+        <a href="{{ url_for('create_ticket') }}" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Create New Ticket
+        </a>
+    </div>
+</div>
+
+<!-- Metrics Cards Row -->
+<div class="stats-grid">
+    <!-- Total Tickets -->
+    <div class="stat-card stat-total">
+        <div class="stat-icon-wrapper icon-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Total Tickets</span>
+            <span class="stat-number">{{ stats.total }}</span>
+            <span class="stat-helper">All recorded complaints</span>
+        </div>
+    </div>
+
+    <!-- Open Tickets -->
+    <div class="stat-card stat-open">
+        <div class="stat-icon-wrapper icon-amber">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Open Tickets</span>
+            <span class="stat-number">{{ stats.open }}</span>
+            <span class="stat-helper">Awaiting initial response</span>
+        </div>
+    </div>
+
+    <!-- In Progress Tickets -->
+    <div class="stat-card stat-progress">
+        <div class="stat-icon-wrapper icon-purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">In Progress</span>
+            <span class="stat-number">{{ stats.in_progress }}</span>
+            <span class="stat-helper">Under active investigation</span>
+        </div>
+    </div>
+
+    <!-- Resolved Tickets -->
+    <div class="stat-card stat-resolved">
+        <div class="stat-icon-wrapper icon-green">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">Resolved Tickets</span>
+            <span class="stat-number">{{ stats.resolved }}</span>
+            <span class="stat-helper">Successfully closed</span>
+        </div>
+    </div>
+
+    <!-- High Priority Tickets -->
+    <div class="stat-card stat-high">
+        <div class="stat-icon-wrapper icon-red">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        </div>
+        <div class="stat-info">
+            <span class="stat-label">High Priority</span>
+            <span class="stat-number">{{ stats.high_priority }}</span>
+            <span class="stat-helper">Critical active issues</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Split: Category Breakdown & Quick Info -->
+<div class="dashboard-split-row">
+    <!-- Category Distribution -->
+    <div class="card category-distribution-card">
+        <div class="card-header">
+            <div class="card-title-group">
+                <h2 class="card-title">Tickets by Category</h2>
+                <span class="card-subtitle">Distribution across IT service domains</span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if category_counts %}
+                <div class="category-bars">
+                    {% for cat in category_counts %}
+                        {% set percentage = ((cat['count'] / stats.total) * 100)|round|int if stats.total > 0 else 0 %}
+                        <div class="category-bar-item">
+                            <div class="category-bar-labels">
+                                <span class="category-name">{{ cat['category'] }}</span>
+                                <span class="category-count">{{ cat['count'] }} ticket{{ 's' if cat['count'] != 1 else '' }} ({{ percentage }}%)</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: {{ percentage }}%;"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">No tickets registered yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Help & Workflow Card -->
+    <div class="card quick-info-card">
+        <div class="card-header">
+            <div class="card-title-group">
+                <h2 class="card-title">Help Desk Workflow</h2>
+                <span class="card-subtitle">Life cycle of an IT service request</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <div class="step-badge">1</div>
+                    <div class="step-text">
+                        <strong>Submit Complaint</strong>
+                        <p>User reports issue with category, priority, and description.</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-badge">2</div>
+                    <div class="step-text">
+                        <strong>Triage & Assignment</strong>
+                        <p>IT support team reviews ticket and sets status to <em>In Progress</em>.</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-badge">3</div>
+                    <div class="step-text">
+                        <strong>Resolution & Closure</strong>
+                        <p>Technician resolves root cause, logs activity, and marks <em>Resolved</em>.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="workflow-actions">
+                <a href="{{ url_for('tickets') }}" class="btn btn-secondary btn-block">Explore Ticket Queue</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tickets Section -->
+<div class="card recent-tickets-card">
+    <div class="card-header flex-header">
+        <div class="card-title-group">
+            <h2 class="card-title">Recent Tickets</h2>
+            <span class="card-subtitle">Latest support issues submitted across the institution</span>
+        </div>
+        <a href="{{ url_for('tickets') }}" class="link-view-all">
+            View All Tickets &rarr;
+        </a>
+    </div>
+    <div class="card-body no-padding">
+        {% if recent_tickets %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Title & Issue</th>
+                            <th>Requester</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in recent_tickets %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('ticket_details', ticket_id=ticket['ticket_id']) }}" class="ticket-id-badge">
+                                        {{ ticket['ticket_id'] }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('ticket_details', ticket_id=ticket['ticket_id']) }}" class="table-ticket-title">
+                                        {{ ticket['title'] }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="requester-cell">{{ ticket['requester_name'] }}</span>
+                                </td>
+                                <td>
+                                    <span class="category-pill">{{ ticket['category'] }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge-priority priority-{{ ticket['priority'].lower() }}">
+                                        {{ ticket['priority'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-status status-{{ ticket['status'].lower().replace(' ', '-') }}">
+                                        {{ ticket['status'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="date-cell">{{ ticket['created_at']|format_datetime }}</span>
+                                </td>
+                                <td class="text-right">
+                                    <a href="{{ url_for('ticket_details', ticket_id=ticket['ticket_id']) }}" class="btn-action-view" title="View Ticket Details">
+                                        View &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                </div>
+                <h3>No tickets found</h3>
+                <p>No IT complaints have been logged in the system yet.</p>
+                <a href="{{ url_for('create_ticket') }}" class="btn btn-primary btn-sm">Create the first ticket</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

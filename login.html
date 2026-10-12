@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Login &bull; IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="card auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h1 class="auth-title">Staff Portal Login</h1>
+            <p class="auth-subtitle">Sign in to manage IT complaint tickets, update status, and log resolution actions.</p>
+        </div>
+
+        <div class="card-body">
+            <!-- College Evaluation Demo Account Notice -->
+            <div class="demo-credentials-box">
+                <div class="demo-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <strong>Evaluation Demonstration Accounts:</strong>
+                </div>
+                <div class="demo-list">
+                    <div class="demo-item">
+                        <span class="role">Admin:</span>
+                        <code>admin</code> &bull; Password: <code>Admin@123</code>
+                    </div>
+                    <div class="demo-item">
+                        <span class="role">Staff:</span>
+                        <code>support_agent</code> &bull; Password: <code>Agent@123</code>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="username" class="form-label required">Username or Email</label>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <input type="text" id="username" name="username" required autofocus
+                               value="{{ username or '' }}"
+                               placeholder="e.g., admin or support_agent"
+                               class="form-control form-control-icon">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label required">Password</label>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <input type="password" id="password" name="password" required
+                               placeholder="Enter your password"
+                               class="form-control form-control-icon">
+                    </div>
+                </div>
+
+                <div class="form-actions-auth">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">
+                        Sign In to Staff Portal
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <a href="{{ url_for('dashboard') }}" class="link-return-home">
+                &larr; Return to Public Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

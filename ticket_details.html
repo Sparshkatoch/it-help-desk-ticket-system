@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ ticket['ticket_id'] }} &bull; {{ ticket['title'] }}{% endblock %}
+
+{% block content %}
+<!-- Ticket Header -->
+<div class="ticket-header-banner">
+    <div class="ticket-header-top">
+        <div class="ticket-id-tag">{{ ticket['ticket_id'] }}</div>
+        <div class="ticket-header-badges">
+            <span class="badge-priority priority-{{ ticket['priority'].lower() }}">
+                {{ ticket['priority'] }} Priority
+            </span>
+            <span class="badge-status status-{{ ticket['status'].lower().replace(' ', '-') }}">
+                {{ ticket['status'] }}
+            </span>
+        </div>
+    </div>
+    <h1 class="ticket-detail-title">{{ ticket['title'] }}</h1>
+    <div class="ticket-meta-strip">
+        <span class="meta-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <strong>{{ ticket['requester_name'] }}</strong> ({{ ticket['requester_email'] }})
+        </span>
+        {% if ticket['department'] %}
+            <span class="meta-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                {{ ticket['department'] }}
+            </span>
+        {% endif %}
+        <span class="meta-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Submitted: {{ ticket['created_at']|format_datetime }}
+        </span>
+        {% if ticket['updated_at'] and ticket['updated_at'] != ticket['created_at'] %}
+            <span class="meta-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                Last updated: {{ ticket['updated_at']|format_datetime }}
+            </span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="details-layout-grid">
+    <!-- Left Column: Details & Timeline -->
+    <div class="details-main-column">
+        <!-- Issue Description Card -->
+        <div class="card issue-description-card">
+            <div class="card-header">
+                <h2 class="card-title">Issue Description</h2>
+            </div>
+            <div class="card-body">
+                <div class="description-text">
+                    {{ ticket['description'] | e | replace('\n', '<br>') | safe }}
+                </div>
+                <div class="category-indicator-box">
+                    <span class="indicator-label">Technical Category:</span>
+                    <span class="category-pill">{{ ticket['category'] }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline & Activity Log Card -->
+        <div class="card timeline-card">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <h2 class="card-title">Activity & Progress Log</h2>
+                    <span class="card-subtitle">Audited record of status changes and technician notes</span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if notes %}
+                    <div class="timeline-stream">
+                        {% for n in notes %}
+                            <div class="timeline-entry {% if '[System Update]' in n['note'] %}timeline-system{% endif %}">
+                                <div class="timeline-bullet"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <span class="timeline-author">{{ n['author'] }}</span>
+                                        <span class="timeline-time">{{ n['created_at']|format_datetime }}</span>
+                                    </div>
+                                    <div class="timeline-body">
+                                        {{ n['note'] | e | replace('\n', '<br>') | safe }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No activity notes recorded yet for this ticket.</p>
+                {% endif %}
+
+                <!-- Add Note Form for Logged-In Staff -->
+                {% if current_user %}
+                    <hr class="card-divider">
+                    <form method="POST" action="{{ url_for('add_ticket_note', ticket_id=ticket['ticket_id']) }}" class="add-note-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <label for="newNote" class="form-label">Add Technician Note / Update</label>
+                        <textarea id="newNote" name="note" rows="3" required placeholder="Record diagnosis, hardware replaced, or customer communication..." class="form-control mb-2"></textarea>
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            Post Note
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Staff Management & Controls -->
+    <aside class="details-sidebar">
+        <!-- Staff Management Card -->
+        {% if current_user %}
+            <div class="card management-card">
+                <div class="card-header staff-header">
+                    <div class="card-title-group">
+                        <h3 class="card-title">Staff Controls</h3>
+                        <span class="card-subtitle">Authenticated as {{ current_user['username'] }} ({{ current_user['role'] }})</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('update_ticket_status', ticket_id=ticket['ticket_id']) }}" class="status-update-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="form-group">
+                            <label for="statusSelect" class="form-label">Ticket Status</label>
+                            <select id="statusSelect" name="status" class="form-control">
+                                {% for s in STATUSES %}
+                                    <option value="{{ s }}" {% if ticket['status'] == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prioritySelect" class="form-label">Priority Level</label>
+                            <select id="prioritySelect" name="priority" class="form-control">
+                                {% for p in PRIORITIES %}
+                                    <option value="{{ p }}" {% if ticket['priority'] == p %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="statusNote" class="form-label">Optional Resolution Note</label>
+                            <textarea id="statusNote" name="note" rows="2" placeholder="e.g., Replaced RAM module, tested OK." class="form-control"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Update Ticket
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <!-- Public User Notice Card -->
+            <div class="card login-prompt-card">
+                <div class="card-header">
+                    <h3 class="card-title">Staff Management</h3>
+                </div>
+                <div class="card-body">
+                    <p class="prompt-text">Are you a member of the IT support team? Log in to update this ticket's status, adjust its priority, or append resolution logs.</p>
+                    <a href="{{ url_for('login', next=request.url) }}" class="btn btn-primary btn-block">
+                        Staff Login &rarr;
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Quick Summary & Actions -->
+        <div class="card quick-actions-card">
+            <div class="card-header">
+                <h3 class="card-title">Quick Actions</h3>
+            </div>
+            <div class="card-body">
+                <button onclick="window.print()" class="btn btn-outline btn-block mb-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print Ticket Summary
+                </button>
+                <a href="{{ url_for('tickets') }}" class="btn btn-secondary btn-block">
+                    &larr; Return to All Tickets
+                </a>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

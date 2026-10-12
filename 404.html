@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ error_title or '404 - Page Not Found' }} &bull; IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="error-page-container">
+    <div class="card error-card">
+        <div class="card-body text-center py-5">
+            <div class="error-code-badge">404</div>
+            <h1 class="error-heading">{{ error_title or 'Page or Ticket Not Found' }}</h1>
+            <p class="error-lead">
+                {{ error_message or 'The requested page or ticket does not exist or may have been relocated.' }}
+            </p>
+            <div class="error-actions mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                    Return to Dashboard
+                </a>
+                <a href="{{ url_for('tickets') }}" class="btn btn-outline ml-2">
+                    Browse All Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Support Ticket &bull; IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title-area">
+        <h1 class="page-title">Submit New IT Support Ticket</h1>
+        <p class="page-subtitle">Report a technical issue or request IT equipment assistance.</p>
+    </div>
+    <div class="dashboard-actions">
+        <a href="{{ url_for('tickets') }}" class="btn btn-outline">
+            &larr; Back to Ticket Queue
+        </a>
+    </div>
+</div>
+
+<div class="form-layout-grid">
+    <!-- Main Ticket Form Card -->
+    <div class="card form-card">
+        <div class="card-header">
+            <div class="card-title-group">
+                <h2 class="card-title">Incident Details</h2>
+                <span class="card-subtitle">Fill in all details to help our engineers diagnose and resolve the issue quickly.</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('create_ticket') }}" class="ticket-form" novalidate>
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Ticket Title -->
+                <div class="form-group">
+                    <label for="title" class="form-label required">Ticket Title</label>
+                    <input type="text" id="title" name="title" required minlength="5" maxlength="120"
+                           value="{{ form_data.get('title', '') }}"
+                           placeholder="e.g., Cannot connect to lab Wi-Fi or Printer paper jam in Room 204"
+                           class="form-control">
+                    <small class="form-help">A concise summary of the problem (5 to 120 characters).</small>
+                </div>
+
+                <!-- Requester Info Row -->
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="requester_name" class="form-label required">Requester's Full Name</label>
+                        <input type="text" id="requester_name" name="requester_name" required
+                               value="{{ form_data.get('requester_name', '') }}"
+                               placeholder="e.g., Alex Johnson"
+                               class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="requester_email" class="form-label required">Official / College Email</label>
+                        <input type="email" id="requester_email" name="requester_email" required
+                               value="{{ form_data.get('requester_email', '') }}"
+                               placeholder="e.g., alex.j@college.edu"
+                               class="form-control">
+                        <small class="form-help">Status updates will be sent to this email address.</small>
+                    </div>
+                </div>
+
+                <!-- Category & Department Row -->
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="category" class="form-label required">Problem Category</label>
+                        <select id="category" name="category" required class="form-control">
+                            <option value="" disabled {% if not form_data.get('category') %}selected{% endif %}>Select issue category...</option>
+                            {% for cat in CATEGORIES %}
+                                <option value="{{ cat }}" {% if form_data.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="department" class="form-label">Department / Branch <span class="text-muted">(Optional)</span></label>
+                        <input type="text" id="department" name="department"
+                               value="{{ form_data.get('department', '') }}"
+                               placeholder="e.g., Computer Engineering, Library, Admin"
+                               class="form-control">
+                    </div>
+                </div>
+
+                <!-- Priority Selection -->
+                <div class="form-group">
+                    <label class="form-label required">Urgency / Priority Level</label>
+                    <div class="priority-options-grid">
+                        <label class="priority-radio-card priority-low">
+                            <input type="radio" name="priority" value="Low" {% if form_data.get('priority') == 'Low' %}checked{% endif %}>
+                            <div class="priority-card-content">
+                                <span class="priority-badge-title">Low</span>
+                                <span class="priority-badge-desc">Minor issue, general question, or work can continue normally.</span>
+                            </div>
+                        </label>
+
+                        <label class="priority-radio-card priority-medium">
+                            <input type="radio" name="priority" value="Medium" {% if form_data.get('priority', 'Medium') == 'Medium' %}checked{% endif %}>
+                            <div class="priority-card-content">
+                                <span class="priority-badge-title">Medium</span>
+                                <span class="priority-badge-desc">Standard issue affecting daily work, but partial workaround exists.</span>
+                            </div>
+                        </label>
+
+                        <label class="priority-radio-card priority-high">
+                            <input type="radio" name="priority" value="High" {% if form_data.get('priority') == 'High' %}checked{% endif %}>
+                            <div class="priority-card-content">
+                                <span class="priority-badge-title">High</span>
+                                <span class="priority-badge-desc">Critical blockage, lab equipment down, exam/deadline affected.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Detailed Description -->
+                <div class="form-group">
+                    <label for="description" class="form-label required">Detailed Problem Description</label>
+                    <textarea id="description" name="description" rows="5" required minlength="10"
+                              placeholder="Please describe what occurred, error messages displayed, room or desk number, and troubleshooting steps already attempted..."
+                              class="form-control">{{ form_data.get('description', '') }}</textarea>
+                    <small class="form-help">Provide as much detail as possible (minimum 10 characters).</small>
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Submit IT Ticket
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Helpful Sidebar Guide -->
+    <aside class="sidebar-guide">
+        <div class="card guide-card">
+            <div class="card-header">
+                <h3 class="card-title">Submission Guidelines</h3>
+            </div>
+            <div class="card-body guide-content">
+                <div class="guide-item">
+                    <div class="guide-item-icon">&#9679;</div>
+                    <div class="guide-item-text">
+                        <strong>Include Specific Details</strong>
+                        <p>State exact error codes, device serial numbers, or software version numbers.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-item-icon">&#9679;</div>
+                    <div class="guide-item-text">
+                        <strong>Mention Workstation Location</strong>
+                        <p>Specifying the floor, room, or lab number helps on-site technicians reach you promptly.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-item-icon">&#9679;</div>
+                    <div class="guide-item-text">
+                        <strong>High Priority Policy</strong>
+                        <p>Mark <em>High</em> only if critical academic or organizational activities are completely halted.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-item-icon">&#9679;</div>
+                    <div class="guide-item-text">
+                        <strong>Ticket Tracking</strong>
+                        <p>Upon submission, a unique ticket ID (e.g. <code>HD-1009</code>) will be generated for tracking.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}
